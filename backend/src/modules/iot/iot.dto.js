@@ -1,24 +1,24 @@
-export const getDataDeviceResponse = (data) => {
+export const createGetUniqueDeviceResponse = (data) => {
   return {
     status: "success",
     data,
   };
 };
 
-export const getDataMeasurementResponse = (data) => {
+export const createGetMeasurementResponse = (data) => {
   return {
     status: "success",
     data,
   };
 };
 
-export const saveDataMeasurementResponse = () => {
+export const createAddMeasurementResponse = () => {
   return {
     status: "success",
   };
 };
 
-export const errorResponse = (message) => {
+export const createErrorResponse = (message) => {
   return {
     status: "error",
     message,
@@ -27,9 +27,9 @@ export const errorResponse = (message) => {
 
 //------------------------------------------------------
 
-export const getDataMeasurementValidate = (query) => {};
+export const validateGetMeasurementPayload = (query) => {};
 
-export const saveDataMeasurementValidate = (payload) => {
+export const validateAddMeasurementPayload = (payload) => {
   if (!payload) {
     throw new Error("No payload provided");
   }

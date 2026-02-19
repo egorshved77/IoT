@@ -1,24 +1,26 @@
 import * as dto from "./iot.dto.js";
-import * as connector from "../../shared/storage/db.connector.js";
+import * as database from "../../shared/db/db.connector.js";
+import * as socket from "../dashboard/socket.handler.js";
 
-export const getDataDevice = async () => {
-  const data = await connector.loadDataDevice();
+export const getUniqueDevice = async () => {
+  const data = await database.getUniqueDeviceData();
 
-  return dto.getDataDeviceResponse(data);
+  return dto.createGetUniqueDeviceResponse(data);
 };
 
-export const getDataMeasurement = async (device) => {
-  dto.getDataMeasurementValidate(device);
+export const getMeasurement = async (device) => {
+  dto.validateGetMeasurementPayload(device);
 
-  const data = await connector.loadDataMeasurement(device);
+  const data = await database.getMeasurementData(device);
 
-  return dto.getDataMeasurementResponse(data);
+  return dto.createGetMeasurementResponse(data);
 };
 
-export const saveDataMeasurement = async (payload) => {
-  dto.saveDataMeasurementValidate(payload);
+export const addMeasurement = async (payload) => {
+  dto.validateAddMeasurementPayload(payload);
 
-  const response = connector.saveDataMeasurement(payload);
+  const data = await database.addMeasurementData(payload);
+  socket.broadcastMeasurementData(data);
 
-  await dto.saveDataMeasurementResponse(response);
+  return dto.createAddMeasurementResponse(data);
 };
