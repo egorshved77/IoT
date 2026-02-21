@@ -1,5 +1,5 @@
 import * as dto from "./iot.dto.js";
-import * as database from "../../shared/db/db.connector.js";
+import * as database from "../../database/db.connector.js";
 import * as socket from "../dashboard/socket.handler.js";
 
 export const getUniqueDevice = async () => {
@@ -9,7 +9,7 @@ export const getUniqueDevice = async () => {
 };
 
 export const getMeasurement = async (device) => {
-  dto.validateGetMeasurementPayload(device);
+  dto.validateGetMeasurementQuery(device);
 
   const data = await database.getMeasurementData(device);
 
@@ -17,7 +17,7 @@ export const getMeasurement = async (device) => {
 };
 
 export const addMeasurement = async (payload) => {
-  dto.validateAddMeasurementPayload(payload);
+  dto.validateAddMeasurementBody(payload);
 
   const data = await database.addMeasurementData(payload);
   socket.broadcastMeasurementData(data);

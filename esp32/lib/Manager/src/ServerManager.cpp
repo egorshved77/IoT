@@ -11,8 +11,8 @@ void ServerManager::setDataProvider(std::function<std::string()> callback) {
     _data_provider = callback;
 }
 
-std::string ServerManager::parseDataToJson(const std::string& data) {
-    return "{\"device\": \"" + _id + "\", \"data\": \"" + data + "\"}";
+std::string ServerManager::parseDataToJson(const std::string& payload) {
+    return "{\"device\": \"" + _device + "\", \"sensor\": \"" + _sensor + "\", \"payload\": \"" + payload + "\"}";
 }
 
 void ServerManager::sendPostRequest(const std::string& body) {

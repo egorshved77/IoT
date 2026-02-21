@@ -27,18 +27,22 @@ export const createErrorResponse = (message) => {
 
 //------------------------------------------------------
 
-export const validateGetMeasurementPayload = (query) => {};
+export const validateGetMeasurementQuery = (query) => {};
 
-export const validateAddMeasurementPayload = (payload) => {
-  if (!payload) {
+export const validateAddMeasurementBody = (body) => {
+  if (!body) {
     throw new Error("No payload provided");
   }
 
-  if (!payload.device) {
-    throw new Error("The device is not defined");
+  if (!body.device) {
+    throw new Error("The device ID is not defined");
   }
 
-  if (!payload.data) {
-    throw new Error("The data is not defined");
+  if (!body.sensor) {
+    throw new Error("The sensor type is not defined");
+  }
+
+  if (!body.payload) {
+    throw new Error("The payload is not defined");
   }
 };

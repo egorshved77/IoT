@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import io from "socket.io-client";
 import styles from "./Dashboard.module.scss";
 
@@ -44,15 +44,15 @@ const DashboardData = ({ measurements }) => {
 };
 
 const Record = ({ item }) => {
-  const { id, data, device, timestamp } = item;
-  const date = new Date(timestamp).toLocaleTimeString();
+  const { device, sensor, payload, received_at } = item;
+  const date = new Date(received_at).toLocaleTimeString();
 
   return (
     <li className={styles["records__item"]}>
       <div className={styles["records__item--short"]}>{date}</div>
-      <div className={styles["records__item--short"]}>id: {id}</div>
       <div className={styles["records__item--short"]}>device: {device}</div>
-      <div className={styles["records__item--long"]}>payload: {data}</div>
+      <div className={styles["records__item--short"]}>sensor: {sensor}</div>
+      <div className={styles["records__item--long"]}>payload: {payload}</div>
     </li>
   );
 };

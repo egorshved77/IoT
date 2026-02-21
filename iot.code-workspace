@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "frontend"
+		},
+		{
+			"path": "db"
 		}
 	],
 	"settings": {}

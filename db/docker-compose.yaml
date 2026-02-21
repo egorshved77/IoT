@@ -1,0 +1,21 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: iot_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: supersecret_root
+      MYSQL_DATABASE: iot_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - ./data:/var/lib/mysql
+  adminer:
+    image: adminer
+    container_name: iot_adminer
+    restart: always
+    ports:
+      - "3307:8080"
+    depends_on:
+      - db

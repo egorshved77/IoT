@@ -1,5 +1,3 @@
-import * as dto from "./db.dto.js";
-
 const _db_mock = [];
 
 export const getUniqueDeviceData = async () => {
@@ -22,7 +20,7 @@ export const getMeasurementData = async (device) => {
 };
 
 export const addMeasurementData = async (payload) => {
-  const record = dto.createMeasurementRecord(_db_mock.length, payload);
+  const record = createMeasurementRecord(payload);
 
   await addToDatabase(record);
 
@@ -37,4 +35,10 @@ const loadDatabase = async () => {
 
 const addToDatabase = async (record) => {
   _db_mock.push(record);
+};
+
+//-----------------------------------------------------------------------
+
+const createMeasurementRecord = (payload) => {
+  return { received_at: new Date(), ...payload };
 };
