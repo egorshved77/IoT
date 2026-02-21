@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "db"
+		},
+		{
+			"path": "mqtt"
 		}
 	],
 	"settings": {}
