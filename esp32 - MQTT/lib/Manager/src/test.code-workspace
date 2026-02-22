@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../../Desktop/git-dev/esp32/test"
+		},
+		{
+			"name": "ESP32",
+			"path": "../../.."
+		}
+	],
+	"settings": {}
+}

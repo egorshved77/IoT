@@ -1,9 +1,6 @@
 {
 	"folders": [
 		{
-			"path": "esp32"
-		},
-		{
 			"path": "backend"
 		},
 		{
@@ -14,7 +11,14 @@
 		},
 		{
 			"path": "mqtt"
+		},
+		{
+			"path": "esp32 - MQTT"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"cSpell.words": [
+			"MQTT"
+		]
+	}
 }

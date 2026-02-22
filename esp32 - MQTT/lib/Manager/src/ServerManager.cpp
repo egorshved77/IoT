@@ -3,7 +3,7 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 
-ServerManager::ServerManager() : _server(80) {}
+ServerManager::ServerManager() : _server(80), _mqttClient(_wifiClient) {}               // Modified
 
 // ------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ void ServerManager::sendPostRequest(const std::string& body) {
 
     HTTPClient http;
 
-    http.begin(_url.c_str());
+    http.begin(_url_rest.c_str());
     http.addHeader("Content-Type", "application/json");
 
     int httpResponseCode = http.POST(body.c_str());
@@ -38,6 +38,15 @@ void ServerManager::sendPostRequest(const std::string& body) {
     }
  
     http.end();
+}
+
+void ServerManager::sendMqttMessage(const std::string& body) {                          // Added
+
+    if (_mqttClient.publish(_mqtt_topic.c_str(), body.c_str())) {
+        Serial.println("MQTT message published.");
+    } else {
+        Serial.println("MQTT message error.");
+    }
 }
 
 // ------------------------------------------------------------------------
@@ -80,7 +89,7 @@ void ServerManager::stopAP() {
 
 // ------------------------------------------------------------------------
 
-void ServerManager::startSTA() {
+void ServerManager::startSTA() {                                                        // Modified
     WiFi.mode(WIFI_STA); 
 
     delay(100);
@@ -98,13 +107,32 @@ void ServerManager::startSTA() {
     Serial.println();
 
     if (WiFi.status() == WL_CONNECTED) {
-        Serial.print("Connection established.\n");
+        Serial.print("Connection established (network).\n");
     } else {
-        Serial.print("Connection failed. Rebooting...\n");
+        Serial.print("Connection failed (network). Rebooting...\n");
 
-        delay(2000);
+        delay(5000);
         
         ESP.restart();
+    }
+
+    _mqttClient.setServer(_mqtt_broker.c_str(), _mqtt_port);                           
+}
+
+void ServerManager::connectToMqtt() {                                                   // Added
+
+    while (!_mqttClient.connected()) {
+        Serial.println("Connecting to MQTT.");
+
+        if (_mqttClient.connect(_device.c_str())) {
+            Serial.println("Connection established (MQTT).");
+        } else {
+            Serial.print("Connection failed (MQTT). State: ");
+            Serial.print(_mqttClient.state());
+            Serial.print("\n");
+            
+            delay(5000); 
+        }
     }
 }
 
@@ -116,13 +144,24 @@ bool ServerManager::loopAP() {
     return _sta_ssid.empty() || _sta_password.empty();
 }
 
-void ServerManager::loopSTA() {
-    delay(_delay_ms);
+void ServerManager::loopSTA() {                                                         // Modified
 
-    if (_data_provider) {
-        std::string jsonBody = parseDataToJson(_data_provider());
-        sendPostRequest(jsonBody);
-    } else {
-        Serial.println("Warning: No Data Provider set!");
+    if (!_mqttClient.connected()) {
+        connectToMqtt();
+    }
+
+    _mqttClient.loop();
+
+    unsigned long currentMillis = millis();
+    if (currentMillis - _last_publish_time >= _delay_ms) {
+        _last_publish_time = currentMillis;
+
+        if (_data_provider) {
+            std::string jsonBody = parseDataToJson(_data_provider());
+            sendMqttMessage(jsonBody);
+            sendPostRequest(jsonBody);
+        } else {
+            Serial.println("Warning: No Data Provider set!");
+        }
     }
 }
