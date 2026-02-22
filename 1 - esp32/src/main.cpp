@@ -2,16 +2,19 @@
 #include <WiFi.h>
 #include <string>
 
-#include "ServerManager.h"
 #include "DiodeManager.h"
+#include "DiodeManagerRGB.h"
+#include "ServerManager.h"
 #include "SensorManager.h"
 
-SensorManager sensor;
-ServerManager server;
 DiodeManager diode;
+DiodeManagerRGB diodeRGB;
+ServerManager server;
+SensorManager sensor;
 
 void setup() {
-  diode.setup();
+  diodeRGB.setup();
+  // diode.setup();
 
   Serial.begin(115200);
 
@@ -29,7 +32,8 @@ void setup() {
 void loop() {
 
   Serial.println("Configuration mode...");
-  diode.setBlue();
+  diodeRGB.setBlue();
+  // diode.setOn();
 
   server.startAP();
 
@@ -40,7 +44,8 @@ void loop() {
   server.stopAP();
 
   Serial.println("Production mode...");
-  diode.setGreen();
+  diodeRGB.setGreen();
+  // diode.setOff();
 
   server.startSTA(true);
 

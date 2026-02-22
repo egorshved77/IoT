@@ -2,9 +2,9 @@
 
 #include <Adafruit_NeoPixel.h>
 
-class DiodeManager {
+class DiodeManagerRGB {
   public:
-      explicit DiodeManager();
+      explicit DiodeManagerRGB();
       
       void setup();
 

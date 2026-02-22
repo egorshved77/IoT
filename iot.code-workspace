@@ -1,23 +1,24 @@
 {
 	"folders": [
 		{
-			"path": "backend"
+			"path": "1 - esp32"
 		},
 		{
-			"path": "frontend"
+			"path": "2 - backend"
 		},
 		{
-			"path": "db"
+			"path": "3 - frontend"
 		},
 		{
-			"path": "mqtt"
+			"path": "4 - db"
 		},
 		{
-			"path": "esp32 - MQTT"
+			"path": "5 - mqtt"
 		}
 	],
 	"settings": {
 		"cSpell.words": [
+			"espressif",
 			"MQTT"
 		]
 	}
