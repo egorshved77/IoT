@@ -5,7 +5,7 @@ import * as dto from "./iot.dto.js";
 const router = Router();
 
 router.get("/device", async (req, res) => {
-  console.log("Request - Get unique devices");
+  console.log("REST request - Get unique devices");
 
   try {
     const results = await service.getUniqueDevice();
@@ -17,7 +17,7 @@ router.get("/device", async (req, res) => {
 });
 
 router.get("/data", async (req, res) => {
-  console.log("Request - Get measurement data");
+  console.log("Rest request - Get measurement data");
 
   try {
     const { device } = req.query;
@@ -31,7 +31,7 @@ router.get("/data", async (req, res) => {
 });
 
 router.post("/data", async (req, res) => {
-  console.log("Request - Add measurement data");
+  console.log("REST request - Add measurement data");
 
   try {
     const results = await service.addMeasurement(req.body);

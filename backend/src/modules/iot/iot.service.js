@@ -1,6 +1,6 @@
 import * as dto from "./iot.dto.js";
 import * as database from "../../database/db.connector.js";
-import * as socket from "../dashboard/socket.handler.js";
+import * as socket from "../web/web.controller.socket.js";
 
 export const getUniqueDevice = async () => {
   const data = await database.getUniqueDeviceData();

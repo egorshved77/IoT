@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import iotRoutes from "./modules/iot/iot.controller.js";
+import iotRoutes from "./modules/iot/iot.controller.rest.js";
 
 const app = express();
 

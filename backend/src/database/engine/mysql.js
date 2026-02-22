@@ -1,14 +1,19 @@
 import mysql from "mysql2/promise";
 
 let _pool;
+const _host = process.env.DB_HOST || "localhost";
+const _port = process.env.DB_PORT || 3306;
+const _user = process.env.DB_USER || "system";
+const _password = process.env.DB_PASSWORD;
+const _database = process.env.DB_NAME;
 
-export const initialize = async () => {
+export const initEngine = async () => {
   _pool = mysql.createPool({
-    host: process.env.DB_HOST || "localhost",
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || "system",
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    host: _host,
+    port: _port,
+    user: _user,
+    password: _password,
+    database: _database,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -17,11 +22,11 @@ export const initialize = async () => {
   _pool
     .getConnection()
     .then((conn) => {
-      console.log("MySQL connection established!");
+      console.log("MySQL connection established");
       conn.release();
     })
     .catch((err) => {
-      console.error(`MySQL connection failed${err.message ? `:${err.message}.` : "!"}`);
+      console.error(`CRITICAL - MySQL connection failed${err.message ? `:${err.message}` : ""}`);
       process.exit(1);
     });
 };
@@ -42,12 +47,8 @@ export const getMeasurementData = async (device) => {
 };
 
 export const addMeasurementData = async (body) => {
-  const received_at = new Date();
-
   const query = `INSERT INTO measurements (device, sensor, payload, received_at) VALUES (?, ?, ?, ?)`;
-  await _pool.execute(query, [body.device, body.sensor, body.payload, received_at]);
-
-  return { ...body, received_at };
+  await _pool.execute(query, [body.device, body.sensor, body.payload, body.received_at]);
 };
 
 //-----------------------------------------------------------------------
