@@ -1,0 +1,7 @@
+services:
+  restfox:
+    image: flawiddsouza/restfox:latest
+    container_name: restfox_gui
+    restart: always
+    ports:
+      - "4004:4004"
