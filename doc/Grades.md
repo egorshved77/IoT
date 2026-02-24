@@ -17,8 +17,8 @@
 **System Operations**
 * 0.2 - Implement a physical hardware reset mechanism.
 * 0.3 - Append timestamps to the data payloads. Synchronize system time via NTP (Network Time Protocol) for timestamp generation.
-* 0.3 - Implement the SensorManager class to abstract sensor readings.
-* 0.3 - Implement the SerialManager class to abstract UART communications.
+* 0.3 - Integrate a custom sensor (apart from RCW-0001).
+* 0.3 - Implement the SerialManager class.
 * 0.3 - Replace manual JSON string concatenation in ServerManager with a dedicated library.
 * 0.4 - Integrate a system Watchdog timer to automatically recover from execution hangs.
 * 0.4 - Implement Deep Sleep functionality to heavily reduce power consumption.
