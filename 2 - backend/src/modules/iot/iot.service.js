@@ -8,10 +8,17 @@ export const getUniqueDevice = async () => {
   return dto.createGetUniqueDeviceResponse(data);
 };
 
-export const getMeasurement = async (device) => {
+export const getMeasurement = async (device, options = {}) => {
   dto.validateGetMeasurementQuery(device);
 
-  const data = await database.getMeasurementData(device);
+  const { limit = 50, offset = 0, sort = "DESC", timeRange = "all" } = options;
+
+  const data = await database.getMeasurementData(device, {
+    limit,
+    offset,
+    sort,
+    timeRange,
+  });
 
   return dto.createGetMeasurementResponse(data);
 };

@@ -1,0 +1,69 @@
+
+> backend@1.0.0 start
+> node src/server.js
+
+[32minfo[39m: Admin user initialized with password hash {"timestamp":"2026-05-27 17:16:49"}
+[32minfo[39m: Backend running on: http://0.0.0.0:3000 {"timestamp":"2026-05-27 17:16:49"}
+Database engine: MySQL
+[32minfo[39m: WebSocket initialized {"timestamp":"2026-05-27 17:16:49"}
+[32minfo[39m: MQTT initialized {"timestamp":"2026-05-27 17:16:49"}
+MQTT connection established (topic: iot/data)
+MySQL connection established
+MQTT Request - Add measurement data
+{
+  device: 'esp32-dht11',
+  sensor: 'dht11',
+  received_at: '2026-05-27 15:16:50',
+  payload: '{"temperature":28.00,"humidity":33.00}'
+}
+[32minfo[39m: GET /api/v1/iot/data {"timestamp":"2026-05-27 17:16:53"}
+Rest request - Get measurement data
+[32minfo[39m: GET /api/v1/iot/data {"timestamp":"2026-05-27 17:16:53"}
+Rest request - Get measurement data
+Dashboard connected (client: 4cu_Nv2P0HMVhYhKAAAB)
+MQTT Request - Add measurement data
+{
+  device: 'esp32-dht11',
+  sensor: 'dht11',
+  received_at: '2026-05-27 15:16:55',
+  payload: '{"temperature":28.10,"humidity":33.00}'
+}
+[32minfo[39m: POST /api/v1/auth/login {"timestamp":"2026-05-27 17:16:56"}
+[32minfo[39m: Login attempt for user: admin {"timestamp":"2026-05-27 17:16:56"}
+[32minfo[39m: Login successful for user: admin {"timestamp":"2026-05-27 17:16:56"}
+[32minfo[39m: GET /api/v1/iot/data {"timestamp":"2026-05-27 17:16:57"}
+Rest request - Get measurement data
+[32minfo[39m: GET /api/v1/iot/data {"timestamp":"2026-05-27 17:16:57"}
+Rest request - Get measurement data
+Dashboard connected (client: RnKdXE8-CnAXE-WxAAAD)
+MQTT Request - Add measurement data
+{
+  device: 'esp32-dht11',
+  sensor: 'dht11',
+  received_at: '2026-05-27 15:17:00',
+  payload: '{"temperature":27.90,"humidity":32.00}'
+}
+MQTT Request - Add measurement data
+{
+  device: 'esp32-dht11',
+  sensor: 'dht11',
+  received_at: '2026-05-27 15:17:05',
+  payload: '{"temperature":28.00,"humidity":33.00}'
+}
+Dashboard disconnected: (client 4cu_Nv2P0HMVhYhKAAAB)
+Dashboard disconnected: (client RnKdXE8-CnAXE-WxAAAD)
+MQTT Request - Add measurement data
+{
+  device: 'esp32-dht11',
+  sensor: 'dht11',
+  received_at: '2026-05-27 15:17:10',
+  payload: '{"temperature":28.00,"humidity":33.00}'
+}
+MQTT Request - Add measurement data
+{
+  device: 'esp32-dht11',
+  sensor: 'dht11',
+  received_at: '2026-05-27 15:17:15',
+  payload: '{"temperature":27.90,"humidity":32.00}'
+}
+MQTT connection established (topic: iot/data)

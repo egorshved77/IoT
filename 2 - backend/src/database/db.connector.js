@@ -25,8 +25,8 @@ export const getUniqueDeviceData = async () => {
   return await _db.getUniqueDeviceData();
 };
 
-export const getMeasurementData = async (device) => {
-  return await _db.getMeasurementData(device);
+export const getMeasurementData = async (device, options = {}) => {
+  return await _db.getMeasurementData(device, options);
 };
 
 export const addMeasurementData = async (payload) => {
@@ -37,4 +37,16 @@ export const addMeasurementData = async (payload) => {
   console.log(data);
 
   return data;
+};
+
+export const getConnection = async () => {
+  return _db.getConnection?.() || {};
+};
+
+export default {
+  initDatabase,
+  getUniqueDeviceData,
+  getMeasurementData,
+  addMeasurementData,
+  getConnection,
 };

@@ -1,9 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import store from "./redux/store.js";
+import log from "./utils/logger.js";
 import App from "./App.jsx";
+
+log.info("Frontend initializing...");
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}>
+      <App />
+    </Provider>
   </React.StrictMode>
 );
+
+log.info("Frontend ready");

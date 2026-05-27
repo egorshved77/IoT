@@ -20,9 +20,20 @@ router.get("/data", async (req, res) => {
   console.log("Rest request - Get measurement data");
 
   try {
-    const { device } = req.query;
+    const { 
+      device, 
+      limit = 50, 
+      offset = 0, 
+      sort = "DESC", // ASC or DESC
+      timeRange = "all" // all, lastHour, today, week, month
+    } = req.query;
 
-    const results = await service.getMeasurement(device);
+    const results = await service.getMeasurement(device, {
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      sort: sort.toUpperCase(),
+      timeRange,
+    });
 
     res.status(200).json(results);
   } catch (error) {

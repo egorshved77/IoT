@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./2\ -\ backend
+    container_name: pwr-iot-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - LOG_LEVEL=info
+      - WEB_ENABLED=true
+      - MQTT_ENABLED=true
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=iot_db
+      - MQTT_BROKER_URL=mqtt://mosquitto:1883
+      - JWT_SECRET=your-secret-key
+    depends_on:
+      - mysql
+      - mosquitto
+    networks:
+      - iot-network
+    volumes:
+      - ./2\ -\ backend/backend.log:/app/backend.log
+
+  frontend:
+    build:
+      context: ./3\ -\ frontend
+    container_name: pwr-iot-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - iot-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: pwr-iot-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=iot_db
+    ports:
+      - "3306:3306"
+    networks:
+      - iot-network
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: pwr-iot-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - iot-network
+    volumes:
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-logs:/mosquitto/log
+
+networks:
+  iot-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  mosquitto-data:
+  mosquitto-logs:

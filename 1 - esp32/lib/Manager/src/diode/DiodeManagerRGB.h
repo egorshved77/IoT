@@ -18,7 +18,7 @@ class DiodeManagerRGB {
   private:
     void applyColor(uint8_t r, uint8_t g, uint8_t b);
 
-    static constexpr uint8_t RGB_PIN = 38;
+    static constexpr uint8_t RGB_PIN = 5;  // Changed from 38 (unavailable) to 5
     static constexpr uint16_t NUM_PIXELS = 1;
 
     Adafruit_NeoPixel _pixels;

@@ -26,16 +26,18 @@ class ServerManager {
 
 private:
     std::string parseDataToJson(const std::string& data);
+    void syncTime();
+    std::string getTimestamp() const;
     void sendPostRequest(const std::string& body);
     
     WebServer _server;
 
     std::function<std::string()> _data_provider;
 
-    std::string _url_rest = "http://10.216.158.124:3000/api/v1/iot/data";
+    std::string _url_rest = "http://192.168.31.233:3000/api/v1/iot/data";
 
-    std::string _device = "d_123";
-    std::string _sensor = "random";
+    std::string _device = "esp32-dht11";
+    std::string _sensor = "dht11";
 
     std::string _ap_ssid = "esp32";
     std::string _ap_password = "supersecret";
@@ -53,7 +55,7 @@ private:
     WiFiClient _client_wifi;
     PubSubClient _client_mqtt;
 
-    std::string _mqtt_broker = "10.216.158.124";
+    std::string _mqtt_broker = "192.168.31.233";
     std::string _mqtt_topic = "iot/data";
     int _mqtt_port = 1883; 
 

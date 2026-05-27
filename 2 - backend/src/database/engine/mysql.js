@@ -38,12 +38,57 @@ export const getUniqueDeviceData = async () => {
   return rows.map((e) => e["device"]);
 };
 
-export const getMeasurementData = async (device) => {
+export const getMeasurementData = async (device, options = {}) => {
+  const { limit = 50, offset = 0, sort = "DESC", timeRange = "all" } = options;
+
+  let query = `SELECT * FROM measurements`;
+  const params = [];
+
+  // Add device filter
   if (device) {
-    return getMeasurementDataSpecific(device);
+    query += ` WHERE device = ?`;
+    params.push(device);
   }
 
-  return getMeasurementDataAll();
+  // Add time range filter
+  if (timeRange !== "all") {
+    const whereKeyword = device ? "AND" : "WHERE";
+    const now = new Date();
+
+    switch (timeRange) {
+      case "lastHour":
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        query += ` ${whereKeyword} received_at >= ?`;
+        params.push(oneHourAgo.toISOString().replace("T", " ").slice(0, 19));
+        break;
+      case "today":
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        query += ` ${whereKeyword} received_at >= ?`;
+        params.push(startOfDay.toISOString().replace("T", " ").slice(0, 19));
+        break;
+      case "week":
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        query += ` ${whereKeyword} received_at >= ?`;
+        params.push(oneWeekAgo.toISOString().replace("T", " ").slice(0, 19));
+        break;
+      case "month":
+        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        query += ` ${whereKeyword} received_at >= ?`;
+        params.push(oneMonthAgo.toISOString().replace("T", " ").slice(0, 19));
+        break;
+    }
+  }
+
+  // Add sorting
+  query += ` ORDER BY received_at ${sort === "ASC" ? "ASC" : "DESC"}`;
+
+  // Add pagination
+  query += ` LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
+
+  const [rows] = await _pool.execute(query, params);
+  return rows;
 };
 
 export const addMeasurementData = async (body) => {
@@ -51,18 +96,6 @@ export const addMeasurementData = async (body) => {
   await _pool.execute(query, [body.device, body.sensor, body.payload, body.received_at]);
 };
 
-//-----------------------------------------------------------------------
-
-const getMeasurementDataAll = async () => {
-  const query = `SELECT * FROM measurements`;
-  const [rows] = await _pool.execute(query);
-
-  return rows;
-};
-
-const getMeasurementDataSpecific = async (device) => {
-  const query = `SELECT * FROM measurements WHERE device = ?`;
-  const [rows] = await _pool.execute(query, [device]);
-
-  return rows;
+export const getConnection = async () => {
+  return await _pool.getConnection();
 };

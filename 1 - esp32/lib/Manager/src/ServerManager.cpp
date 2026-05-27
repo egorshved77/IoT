@@ -1,7 +1,10 @@
 #include "ServerManager.h"
 #include "webpage/MainPageAP.h"
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <WiFi.h>
+#include <ESPmDNS.h>
+#include <time.h>
 
 ServerManager::ServerManager() : _server(80), _client_mqtt(_client_wifi) {}
 
@@ -12,7 +15,45 @@ void ServerManager::setDataProvider(std::function<std::string()> callback) {
 }
 
 std::string ServerManager::parseDataToJson(const std::string& payload) {
-    return "{\"device\": \"" + _device + "\", \"sensor\": \"" + _sensor + "\", \"payload\": \"" + payload + "\"}";
+    JsonDocument document;
+    document["device"] = _device.c_str();
+    document["sensor"] = _sensor.c_str();
+    document["received_at"] = getTimestamp().c_str();
+    document["payload"] = payload.c_str();
+
+    String output;
+    serializeJson(document, output);
+
+    return std::string(output.c_str());
+}
+
+void ServerManager::syncTime() {
+    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+    struct tm timeinfo;
+    for (int retry = 0; retry < 20; retry++) {
+        if (getLocalTime(&timeinfo)) {
+            Serial.println("NTP time synchronized.");
+            return;
+        }
+
+        delay(500);
+    }
+
+    Serial.println("Warning: NTP time synchronization failed.");
+}
+
+std::string ServerManager::getTimestamp() const {
+    struct tm timeinfo;
+
+    if (!getLocalTime(&timeinfo)) {
+        return "unknown";
+    }
+
+    char buffer[32];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
+
+    return std::string(buffer);
 }
 
 void ServerManager::sendPostRequest(const std::string& body) {
@@ -92,6 +133,13 @@ void ServerManager::startSTA(bool initMqtt) {
 
     if (WiFi.status() == WL_CONNECTED) {
         Serial.print("Connection established (network).\n");
+        
+        // Initialize mDNS (make ESP32 accessible as esp32.local)
+        if (MDNS.begin("esp32")) {
+            Serial.println("mDNS responder started. Access via: http://esp32.local");
+        } else {
+            Serial.println("Error starting mDNS responder!");
+        }
     } else {
         Serial.print("Connection failed (network). Rebooting...\n");
 
@@ -99,6 +147,8 @@ void ServerManager::startSTA(bool initMqtt) {
         
         ESP.restart();
     }
+
+    syncTime();
 
     if (initMqtt) {
         _client_mqtt.setServer(_mqtt_broker.c_str(), _mqtt_port);                           

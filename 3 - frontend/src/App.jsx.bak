@@ -1,0 +1,376 @@
+import { useEffect, useMemo, useState } from "react";
+import io from "socket.io-client";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import Login from "./Login";
+import AdminPanel from "./AdminPanel";
+import Toast from "./Toast";
+import { exportToCSV } from "./csvExport";
+import "./App.css";
+
+// Use localhost for development, esp32.local works in the same network (university)
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
+
+const App = () => {
+  const [connected, setConnected] = useState(false);
+  const [measurements, setMeasurements] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem("isDarkMode");
+    return saved !== null ? JSON.parse(saved) : true; // Default to dark mode
+  });
+  
+  // Auth states
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem("authToken"));
+  const [authUser, setAuthUser] = useState(() => {
+    const saved = localStorage.getItem("authUser");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [adminMode, setAdminMode] = useState(false);
+
+  // Filter states
+  const [timeRange, setTimeRange] = useState("all");
+  const [sortOrder, setSortOrder] = useState("DESC");
+  const [limit, setLimit] = useState(50);
+
+  // Toast state
+  const [toasts, setToasts] = useState([]);
+
+  // Save dark mode preference to localStorage
+  useEffect(() => {
+    localStorage.setItem("isDarkMode", JSON.stringify(isDarkMode));
+    document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    setAuthToken(null);
+    setAuthUser(null);
+    setAdminMode(false);
+    // Force re-render to show login
+    window.location.href = window.location.href;
+  };
+
+  // Listen for storage changes (for login/logout)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem("authToken");
+      const user = localStorage.getItem("authUser");
+      setAuthToken(token);
+      setAuthUser(user ? JSON.parse(user) : null);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Toast helper
+  const showToast = (message, type = "info") => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Handle login success
+  const handleLoginSuccess = (user) => {
+    const token = localStorage.getItem("authToken");
+    setAuthToken(token);
+    setAuthUser(user);
+    setAdminMode(user.role === "admin");
+  };
+
+  // Show admin panel if admin mode is active
+  if (adminMode && authToken && authUser?.role === "admin") {
+    console.log("Rendering AdminPanel");
+    return (
+      <AdminPanel
+        user={authUser}
+        token={authToken}
+        onLogout={handleLogout}
+        SOCKET_URL={SOCKET_URL}
+      />
+    );
+  }
+
+  // Show login if no auth token
+  if (!authToken) {
+    return <Login onLoginSuccess={handleLoginSuccess} SOCKET_URL={SOCKET_URL} />;
+  }
+
+  const parsedMeasurements = useMemo(
+    () =>
+      measurements.map((item) => {
+        let payload = item.payload;
+
+        if (typeof payload === "string") {
+          try {
+            payload = JSON.parse(payload);
+          } catch {
+            payload = { raw: payload };
+          }
+        }
+
+        return {
+          ...item,
+          payload,
+        };
+      }),
+    [measurements]
+  );
+
+  // Prepare chart data (reverse to show chronological order)
+  const chartData = useMemo(
+    () =>
+      [...parsedMeasurements].reverse().map((item) => ({
+        time: new Date(item.received_at).toLocaleTimeString(),
+        timestamp: new Date(item.received_at).getTime(),
+        temperature: parseFloat(item.payload?.temperature) || 0,
+        humidity: parseFloat(item.payload?.humidity) || 0,
+      })),
+    [parsedMeasurements]
+  );
+
+  const latest = parsedMeasurements[0];
+
+  useEffect(() => {
+    // Load initial measurement history with filters
+    const params = new URLSearchParams({
+      device: "esp32-dht11",
+      limit,
+      offset: 0,
+      sort: sortOrder,
+      timeRange,
+    });
+
+    fetch(`${SOCKET_URL}/api/v1/iot/data?${params}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setMeasurements(data);
+        }
+      })
+      .catch((err) => console.error("Failed to load measurements:", err));
+
+    // Connect WebSocket for real-time updates
+    const webSocket = io(SOCKET_URL, {
+      transports: ["websocket"],
+      reconnectionAttempts: 5,
+    });
+
+    webSocket.on("connect", () => setConnected(true));
+    webSocket.on("disconnect", () => setConnected(false));
+    webSocket.on("measurement", (data) => {
+      setMeasurements((prev) => [data, ...prev].slice(0, limit));
+      showToast(`New measurement: ${data.payload?.temperature}°C`, "info");
+    });
+
+    return () => webSocket.close();
+  }, [timeRange, sortOrder, limit]);
+
+  return (
+    <div className={`dashboard ${isDarkMode ? "dark" : "light"}`}>
+      {toasts.map(toast => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+      <header className="hero">
+        <div>
+          <p className="eyebrow">ESP32 + DHT11</p>
+          <h1>Live climate dashboard</h1>
+          <p className="subtitle">Temperature and humidity stream from your home sensor to the backend in real time.</p>
+        </div>
+
+        <div className="header-controls">
+          <button 
+            className="theme-toggle" 
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDarkMode ? "☀️" : "🌙"}
+          </button>
+          
+          {authUser?.role === "admin" && (
+            <button
+              className="admin-btn"
+              onClick={() => {
+                console.log("Admin button clicked, adminMode:", adminMode, "authUser:", authUser);
+                setAdminMode(!adminMode);
+              }}
+              title="Admin Panel"
+            >
+              ⚙️ Admin
+            </button>
+          )}
+
+          {authToken && (
+            <button 
+              className="logout-btn" 
+              onClick={handleLogout}
+              title="Logout"
+            >
+              Logout
+            </button>
+          )}
+
+          <div className={`status-pill ${connected ? "online" : "offline"}`}>
+            {connected ? "LIVE" : "DISCONNECTED"}
+          </div>
+        </div>
+      </header>
+
+      <section className="filters">
+        <div className="filter-group">
+          <label>Time Range</label>
+          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+            <option value="all">All Time</option>
+            <option value="lastHour">Last Hour</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Sort Order</label>
+          <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+            <option value="DESC">Newest First</option>
+            <option value="ASC">Oldest First</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Limit Results</label>
+          <select value={limit} onChange={(e) => setLimit(parseInt(e.target.value))}>
+            <option value={10}>10 items</option>
+            <option value={25}>25 items</option>
+            <option value={50}>50 items</option>
+            <option value={100}>100 items</option>
+          </select>
+        </div>
+      </section>
+
+      <section className="metrics">
+        <article className="metric-card warm">
+          <span>Temperature</span>
+          <strong>{latest?.payload?.temperature ?? "--"}</strong>
+          <small>°C</small>
+        </article>
+
+        <article className="metric-card cool">
+          <span>Humidity</span>
+          <strong>{latest?.payload?.humidity ?? "--"}</strong>
+          <small>%</small>
+        </article>
+
+        <article className="metric-card deep">
+          <span>Device</span>
+          <strong>{latest?.device ?? "--"}</strong>
+          <small>{latest?.sensor ?? "dht11"}</small>
+        </article>
+      </section>
+
+      <section className="charts">
+        <h2>Historical data</h2>
+        <div className="chart-grid">
+          <div className="chart-container">
+            <h3>Temperature over time</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="time" stroke="#888" style={{ fontSize: "12px" }} />
+                <YAxis stroke="#888" style={{ fontSize: "12px" }} label={{ value: "°C", angle: -90, position: "insideLeft" }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#222", border: "1px solid #ff6b35" }}
+                  labelStyle={{ color: "#fff" }}
+                  cursor={{ stroke: "#ff6b35" }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="temperature" 
+                  stroke="#ff6b35" 
+                  dot={false}
+                  strokeWidth={2}
+                  name="Temperature (°C)"
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="chart-container">
+            <h3>Humidity over time</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="time" stroke="#888" style={{ fontSize: "12px" }} />
+                <YAxis stroke="#888" style={{ fontSize: "12px" }} label={{ value: "%", angle: -90, position: "insideLeft" }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: "#222", border: "1px solid #4fb3d9" }}
+                  labelStyle={{ color: "#fff" }}
+                  cursor={{ stroke: "#4fb3d9" }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="humidity" 
+                  stroke="#4fb3d9" 
+                  dot={false}
+                  strokeWidth={2}
+                  name="Humidity (%)"
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
+      <section className="feed">
+        <div className="feed-header">
+          <h2>Recent measurements</h2>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <p>{parsedMeasurements.length} stored readings</p>
+            <button
+              className="export-btn"
+              onClick={() => {
+                exportToCSV(parsedMeasurements, `measurements_${new Date().toISOString().slice(0, 10)}.csv`);
+                showToast("Data exported to CSV", "success");
+              }}
+            >
+              📥 Export CSV
+            </button>
+          </div>
+        </div>
+
+        <div className="timeline">
+          {parsedMeasurements.map((item) => (
+            <article className="timeline-item" key={`${item.received_at}-${item.device}`}>
+              <div className="timeline-time">{new Date(item.received_at).toLocaleString()}</div>
+              <div className="timeline-body">
+                <div>
+                  <strong>{item.device}</strong>
+                  <p>{item.sensor}</p>
+                </div>
+                <div className="payload-grid">
+                  <span>Temp: {item.payload?.temperature ?? item.payload?.raw ?? "--"}</span>
+                  <span>Humidity: {item.payload?.humidity ?? "--"}</span>
+                  <span>Measured: {item.payload?.measured_at ?? item.received_at}</span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default App;

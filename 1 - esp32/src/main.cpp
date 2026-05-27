@@ -1,4 +1,4 @@
-#include <Arduino.h>
+ #include <Arduino.h>
 #include <WiFi.h>
 #include <string>
 
@@ -13,26 +13,28 @@ ServerManager server;
 SensorManager sensor;
 
 void setup() {
-  diodeRGB.setup();           // diode.setup();
-  sensor.setup();
-
   Serial.begin(115200);
 
-  while (!Serial) { 
-    delay(10); 
-  }
-  
+  Serial.println("Booting ESP32 DHT11 firmware...");
+
+  diode.setup();
+  diodeRGB.setup();
+  sensor.setup();
+
   delay(10000);
 
   server.setDataProvider([]() -> std::string { 
-    return sensor.measure(); 
+    std::string value = sensor.measure();
+    Serial.printf("Sensor payload: %s\n", value.c_str());
+    return value;
   });
 }
 
 void loop() {
 
   Serial.println("Configuration mode...");
-  diodeRGB.setBlue();         // diode.setOn();
+  diodeRGB.setOff();
+  diode.setOff();
 
   server.startAP();
 
@@ -43,9 +45,12 @@ void loop() {
   server.stopAP();
 
   Serial.println("Production mode...");
-  diodeRGB.setGreen();        // diode.setOff();
-
+  
   server.startSTA(true);
+
+  // Turn on blue LED for WiFi connected status
+  diodeRGB.setBlue();
+  diode.setOn();
 
   while (true) {
     server.loopMqttSTA();
